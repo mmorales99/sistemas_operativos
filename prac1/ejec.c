@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h> // comentar si no funciona
+#include <math.h>
+
+int count_digits(int);
 
 void throw_error(void);
 
@@ -68,7 +71,10 @@ int main(int argc, char *argv[]){
                                 pause();
                                 if(fork()==0){
                                     //if(execlp("ls","ls","-a",NULL)<0){
-                                    if(execlp("pstree","pstree","-T",NULL)<0){
+                                    int leng = count_digits(ejecPID) +1;
+                                    char myPID[leng];
+                                    sprintf(myPID,"%d",ejecPID);
+                                    if(execlp("pstree","pstree","-p",myPID,NULL)<0){ // pstree -p | grep ejec
                                         perror("ERROR, No se ha podido lanzar el exec");
                                         exit(EXIT_FAILURE);
                                     }
@@ -121,4 +127,14 @@ void throw_error(void){
 void my_sync(long unsigned int time){
     for(long unsigned int i = 0; i<time*1000000;i++); // 1000000 ciclos asegura una impresion ordenada
     return;
+}
+
+int count_digits(int n){
+    int m = n;
+    int i=0;
+    while (m>0){
+        m=m/10;
+        i++;
+    }
+    return i;
 }
