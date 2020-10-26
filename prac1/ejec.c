@@ -13,6 +13,9 @@ void throw_error(void); // funcion usada para lanzar errores sin reescribirlos
 
 void my_sync(long unsigned int); // funcion de libreria propia, equivalente a sleep pero en ciclos de reloj, se usa para sincronizar la salida por pantalla
 
+/**
+ * ! Funcion handler para la señal de la alarma, no necesariamente debe ejecutar nada, se podría encapsular la ejecucion del exec en este metodo
+ */ 
 void alarma(){ // esta función es un handler de una señal
     /*
     - ¿Qué es más fácil, decir al paralítico: Tus pecados te son perdonados, o decirle: Levántate, toma tu lecho y anda?
@@ -22,6 +25,12 @@ void alarma(){ // esta función es un handler de una señal
     */
 }
 
+/**
+ * ! Funcion principal, dado un tiempo pasado por parametro genera un arbol de 2 procesos verticales(A y B), el ultimo de ellos(B) es padre de una rama horizontal X Y Z,\
+ *   de donde Z lanza un exec con un pstree tras esperar el tiempo que se le ha dado por parametro.
+ *   @param argc : contador de argumentos, nunca sera menor a 1 y en este caso tiene que ser 2
+ *   @param argv : array que contiene los argumentos
+ */ 
 int main(int argc, char *argv[]){ // funcion principal, debe recivir un parámetro(sera el tiempo de espera entre las partes de la ejecucion, y el tiempo de la alarma)
 
     /**
@@ -87,16 +96,16 @@ int main(int argc, char *argv[]){ // funcion principal, debe recivir un parámet
                                     sprintf(myPID,"%d",ejecPID); // lo almacenamos en forma de cadena de texto
                                     if(execlp("pstree","pstree","-p",myPID,NULL)<0){ // pstree -p | grep ejec // se lanza dentro del hijo z1 la orden mediante exec, esto destruye el proceso z1
                                         perror("ERROR, No se ha podido lanzar el exec");
-                                        exit(EXIT_FAILURE);
+                                        exit(EXIT_FAILURE); // si no sale bien el exec el proceso Z muere con una salida de FALLO
                                     }
                                 }else{
                                     wait(&exec_status); // zOrigen o z2 espera que exec acabe, cuando lo haga, continuara hasta su muerte
                                     printf("Soy Z (%d) y muero\n", getpid());
-                                    exit(EXIT_SUCCESS);
+                                    exit(EXIT_SUCCESS); // sale con una salida exitosa tras ejecutar el exec
                                 }
                             }else{
                                 wait(&statusZ); // una vez muerto Z, B puede continuar
-                                if(statusZ==EXIT_SUCCESS){
+                                if(statusZ==EXIT_SUCCESS){ // una vez muerto Z de manera correcta mueren el resto de procesos
                                     printf("Soy Y (%d) y muero\n", yPID);
                                     kill(yPID, SIGKILL); // mata a Y
                                     my_sync(1); // sincro de la salida
@@ -111,9 +120,9 @@ int main(int argc, char *argv[]){ // funcion principal, debe recivir un parámet
                     }
                 break;
 
-                default:
+                default: // al devolver fork el PID del hijos cuando se llama en el padre, el valor de fork no es fijo para los padres, ademas lo asigna el SO asi que no se puede predecir
                     printf("Soy el proceso A: mi pid es %d. Mi padre es %d\n",aPID, ejecPID);
-                    wait(&statusB);
+                    wait(&statusB); // espera la muerte de B
                     printf("Soy A (%d) y muero\n", getpid());
                     exit(EXIT_SUCCESS);
                 break;
@@ -122,7 +131,7 @@ int main(int argc, char *argv[]){ // funcion principal, debe recivir un parámet
 
         default: // en el caso default se ejecuta el codigo correspondiente al padre o proceso original(en este caso)
             printf("Soy el proceso ejec: mi pid es %d\n",getpid());
-            wait(&statusA);
+            wait(&statusA); // espera la muerte A
             printf("Soy ejec (%d) y muero\n", getpid());
         break;
     }
@@ -140,7 +149,7 @@ void throw_error(void){
 
 /**
  * Funcion auxuliar que sirve para sincronizar la salida estandar por consola, sirve para que se impriman en orden los mensajes de los hijos hermanos X Y Z
- * @param time
+ * @param time : tiempo de espera en milisegundos
  */
 void my_sync(long unsigned int time){
     for(long unsigned int i = 0; i<time*1000000;i++); // 1000000 ciclos asegura una impresion ordenada
