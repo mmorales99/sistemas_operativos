@@ -51,7 +51,7 @@ int main(){
             pipe(p);
             if(fork()==0){
                 close(p[0]);
-                close(1); // cerar stdout
+                close(stdout); // cerar stdout
                 dup(p[1]); // mover al escritor de la tuberia
                 if(execvp(comando[0],comando)<0)
                     perror("NO SE HA PODIDO LANZAR EL EXEC\n\0");
