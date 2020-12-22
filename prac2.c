@@ -10,7 +10,7 @@
 #include <fcntl.h>
 
 int main(int argc, char**argv){
-
+    // ClienteRemoto 127.0.0.1 ls -a
     int sc_servidor; 
     sc_servidor = socket(AF_INET,SOCK_STREAM,0); // socket abierto // int my_file = open("oawkd.c");
     struct sockaddr_in servidor_info;
@@ -36,8 +36,10 @@ int main(int argc, char**argv){
         break;
 
         case 0:
-            recv(sc_cliente,buff,sizeof(buff), 0); // lee :  'pstree -c -p -H | grep ServidorRemoto\0' + '>> output'
-            strcat(buff, ">> output\0");
+            int p[2];
+            pipe(p);
+            recv(sc_cliente,buff,sizeof(buff), 0); // lee :  'pstree -c -p -H | grep ServidorRemoto\0' + '> output'
+            strcat(buff, "> output\0");
             int total_toks = 0;
             char *tokens = strtok(buff," \n\0"); // 'pstree\0'
             while(tokens!=NULL){
@@ -48,14 +50,16 @@ int main(int argc, char**argv){
             tokens[total_toks+1] = NULL;
             memset(buff,0,sizeof(buff));
             if((int exec = fork())!=0){
+                close(stdout);
+                dup(p[1]);
                 if(execv(&tokens[0],&tokens)<0) exit(EXIT_FAILURE);
             }
             wait(NULL);
             int my_file = open("output", O_RDONLY);
-            read(my_file,buff,sizeof(buff));
+            read(my_file,buff,sizeof(buff)); | read(p[0],buff,sizeof(buff));
             close(my_file);
             remove("output");
-            send(sc_cliente,buff,sizeof(buff), 0);
+            send(sc_cliente,buff,sizeof(buff), 0); | write(sc_cliente,buff,sizeof(buff));
         break;
 
         default:
@@ -65,6 +69,12 @@ int main(int argc, char**argv){
     */
 
     /* cliente
+    int sc_servidor; 
+    sc_servidor = socket(AF_INET,SOCK_STREAM,0);
+    struct sockaddr_in servidor_info;
+    servidor_info.sin_family=AF_INET;
+    servidor_info.sin_port=htons(9999);
+    servidor_info.sin_addr.s_addr = inet_addr(argv[1]);
     connect(sc_servidor,(struct sockaddr *)&servidor_info,sizeof(servidor_info));
     char buff[999999];
     unsigned int i = 2;

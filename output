@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h> // funciones auxiliares como inet_addr()
+#include <string.h> // strtok
+#include <sys/wait.h> // wait
+#include <unistd.h> // close
+#include <fcntl.h>
+
+int main(int argc, char**argv){
+    // ClienteRemoto 127.0.0.1 ls -a
+    int sc_servidor; 
+    sc_servidor = socket(AF_INET,SOCK_STREAM,0); // socket abierto // int my_file = open("oawkd.c");
+    struct sockaddr_in servidor_info;
+    servidor_info.sin_family=AF_INET; // PF_INET
+    servidor_info.sin_port=htons(9999);
+    servidor_info.sin_addr.s_addr = INADDR_ANY; //cleinte-> server_info.sin_addr.s_addr = inet_addr(argv[2]);
+    // servidor_info.sin_zero //
+
+    /* server
+    bind(sc_servidor,(struct sockaddr*)&servidor_info,sizeof(servidor_info));
+    int listen_status = 0;
+    listen_status = listen(sc_servidor,5);
+    if(listen_status<0) exit(EXIT_FAILURE);
+    int sc_cliente;
+    struct sockaddr_storage client_strg;
+    sc_cliente = accept(sc_servidor,(struct sockaddr*)&client_strg,sizeof(client_strg));
+    char buff[999999];
+    switch (fork())
+    {
+        case -1:
+            perror("AQUI HA FALLAO");
+            exit(EXIT_FAILURE);
+        break;
+
+        case 0:
+            recv(sc_cliente,buff,sizeof(buff), 0); // lee :  'pstree -c -p -H | grep ServidorRemoto\0' + '>> output'
+            strcat(buff, ">> output\0");
+            int total_toks = 0;
+            char *tokens = strtok(buff," \n\0"); // 'pstree\0'
+            while(tokens!=NULL){
+                total_toks++;
+                tokens = strtok(NULL," \n\0");
+            }
+            tokens = realloc(tokens,(sizeof(tokens)+sizeof(char)));
+            tokens[total_toks+1] = NULL;
+            memset(buff,0,sizeof(buff));
+            if((int exec = fork())!=0){
+                if(execv(&tokens[0],&tokens)<0) exit(EXIT_FAILURE);
+            }
+            wait(NULL);
+            int my_file = open("output", O_RDONLY);
+            read(my_file,buff,sizeof(buff));
+            close(my_file);
+            remove("output");
+            send(sc_cliente,buff,sizeof(buff), 0);
+        break;
+
+        default:
+            wait(NULL);
+        break;
+    }
+    */
+
+    /* cliente
+    int sc_servidor; 
+    sc_servidor = socket(AF_INET,SOCK_STREAM,0);
+    struct sockaddr_in servidor_info;
+    servidor_info.sin_family=AF_INET;
+    servidor_info.sin_port=htons(9999);
+    servidor_info.sin_addr.s_addr = inet_addr(argv[1]);
+    connect(sc_servidor,(struct sockaddr *)&servidor_info,sizeof(servidor_info));
+    char buff[999999];
+    unsigned int i = 2;
+    unsigned int j = 0;
+    while(argv[i]!=NULL){
+        strcat(buff,argv[i]);
+        i++;
+    }
+    write(sc_servidor,buff,sizeof(buff)); // send(sc_servidor,buff,sizeof(buff), 0);
+    read(sc_servidor,buff,sizeof(buff)); // recv(sc_servidor,buff,sizeof(buff), 0);
+    close(sc_servidor);
+    return 0;
+    */
+}
